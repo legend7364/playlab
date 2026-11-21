@@ -1,0 +1,964 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AI Olympiad Cup · DeltaNuva PlayLab</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --grass1:#2e9e4f; --grass2:#28914a; --night:#0f2a4a; --gold:#ffc83d; --gold2:#ffb300;
+    --red:#ff5a5f; --green:#2ecc71; --ink:#1d2a3a;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%;overflow:hidden}
+  body{font-family:'Fredoka',system-ui,sans-serif;color:var(--ink);background:radial-gradient(ellipse at top,#1f5f9e 0%,var(--night) 70%)}
+  .wrap{max-width:1180px;margin:0 auto;height:100vh;height:100dvh;padding:10px}
+  .screen{display:none;height:100%}
+  .screen.active{display:grid;animation:pop .35s ease}
+  @keyframes pop{from{transform:scale(.97);opacity:0}to{transform:scale(1);opacity:1}}
+  .col{display:flex;flex-direction:column;gap:8px;min-height:0;min-width:0}
+  .panel{background:#fff;border-radius:20px;padding:14px;box-shadow:0 6px 0 rgba(0,0,0,.18);min-height:0}
+  .panel h2{font-size:clamp(16px,2.2vh,20px);margin-bottom:8px}
+
+  /* split layout for every screen */
+  .split{grid-template-columns:1fr 1fr;gap:12px}
+
+  /* ---------- START ---------- */
+  .title{text-align:center;color:#fff}
+  .title .spinball{font-size:clamp(34px,6vh,54px);display:inline-block;animation:spin 3s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .title h1{font-size:clamp(24px,4.2vh,36px);line-height:1.1;text-shadow:0 3px 0 rgba(0,0,0,.25)}
+  .title h1 span{color:var(--gold)}
+  .title .mini-rules{display:none}
+  .title p{opacity:.85;font-size:clamp(13px,2vh,17px);margin-top:4px}
+  .me{display:flex;align-items:center;gap:12px;background:#eaf6ff;border-radius:16px;padding:10px}
+  .avatar{width:50px;height:50px;border-radius:50%;display:grid;place-items:center;font-weight:700;font-size:22px;color:#fff;flex:none;border:4px solid #fff;box-shadow:0 3px 0 rgba(0,0,0,.15)}
+  .av-k{background:linear-gradient(135deg,#3fa9f5,#1d6fd1)}
+  .av-ronaldo{background:linear-gradient(135deg,#ff6b6b,#c0392b)}
+  .av-haaland{background:linear-gradient(135deg,#7ed6ff,#2d98da)}
+  .av-lamine{background:linear-gradient(135deg,#ffd86b,#e67e22)}
+  .av-neymar{background:linear-gradient(135deg,#f9e54a,#20a34a);font-size:18px}
+  .av-messi{background:linear-gradient(135deg,#8fd3ff,#2a72c8);font-size:18px}
+  .av-mbappe{background:linear-gradient(135deg,#5b7cfa,#1b2a8a)}
+  .nameIn{display:block;width:100%;margin-top:4px;font:inherit;font-size:22px;font-weight:700;border:3px solid #bfe3ff;border-radius:12px;padding:5px 10px;background:#fff;color:var(--ink);outline:none}
+  .nameIn:focus{border-color:var(--gold2)}
+  .opp-list{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .opp{display:flex;align-items:center;gap:10px;border:3px solid #e3e8ef;border-radius:16px;padding:8px 10px;cursor:pointer;background:#fff;font:inherit;text-align:left;width:100%;transition:transform .1s,border-color .15s}
+  .opp:last-child:nth-child(odd){grid-column:1 / -1}
+  .opp:active{transform:scale(.98)}
+  .opp.sel{border-color:var(--gold2);background:#fff8e1}
+  .opp .avatar{width:44px;height:44px;font-size:19px;border-width:3px}
+  .opp .nm{font-size:18px;font-weight:700}
+  .opp .tag{font-size:13px;opacity:.7}
+  .rules{font-size:clamp(13px,2vh,16px);line-height:1.45}
+  .rules li{margin-left:18px;margin-bottom:3px}
+  .btn{display:block;width:100%;border:none;border-radius:16px;padding:clamp(10px,1.8vh,15px);font:inherit;font-size:clamp(18px,2.6vh,22px);font-weight:700;cursor:pointer;color:#3a2a00;background:linear-gradient(#ffd75e,#ffb300);box-shadow:0 6px 0 #c98a00;transition:transform .08s}
+  .btn:active{transform:translateY(4px);box-shadow:0 2px 0 #c98a00}
+  .btn:disabled{filter:grayscale(1);opacity:.5;cursor:not-allowed}
+  .btn.blue{background:linear-gradient(#6cc4ff,#2d98da);color:#fff;box-shadow:0 6px 0 #1b6fa8}
+  .btn.ghost{background:#eef2f7;color:var(--ink);box-shadow:0 6px 0 #c9d2de}
+
+  /* ---------- PLAY ---------- */
+  .topbar{display:flex;align-items:center;justify-content:space-between;color:#fff;gap:8px}
+  .chip{white-space:nowrap;background:rgba(255,255,255,.15);border-radius:999px;padding:5px 12px;font-size:14px;font-weight:600}
+  .icon-btn{background:rgba(255,255,255,.15);border:none;color:#fff;font-size:18px;border-radius:50%;width:36px;height:36px;cursor:pointer}
+  .board{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;background:#0b1f38;border-radius:16px;padding:8px 10px;color:#fff;border:3px solid #2b4f7a}
+  .team{display:flex;align-items:center;gap:8px;min-width:0}
+  .team.right{flex-direction:row-reverse}
+  .team .avatar{width:38px;height:38px;font-size:16px;border-width:3px}
+  .team .tn{font-weight:700;font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .team .ts{font-size:11px;opacity:.7}
+  .games{font-size:28px;font-weight:700;color:var(--gold);text-align:center;line-height:1;padding:0 6px}
+  .games small{display:block;font-size:10px;color:#fff;opacity:.7;font-weight:500;margin-top:2px}
+  .levels{display:flex;gap:6px;justify-content:center}
+  .lv{width:30px;height:30px;border-radius:9px;background:rgba(255,255,255,.12);color:#fff;display:grid;place-items:center;font-weight:700;font-size:14px}
+  .lv.now{background:var(--gold);color:#3a2a00;transform:scale(1.1)}
+  .lv.w{background:var(--green)} .lv.l{background:var(--red)}
+  .kicks{background:#fff;border-radius:16px;padding:6px 10px}
+  .krow{display:flex;align-items:center;gap:8px;margin:3px 0}
+  .krow .who{width:78px;font-weight:700;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .dots{display:flex;gap:5px;flex-wrap:wrap}
+  .dot{width:24px;height:24px;border-radius:50%;background:#e3e8ef;display:grid;place-items:center;font-size:13px;color:#fff;font-weight:700}
+  .dot.g{background:var(--green)} .dot.m{background:var(--red)}
+  .dot.sd{outline:2px dashed #ff9f43;outline-offset:1px}
+  .krow .tot{margin-left:auto;font-weight:700;font-size:19px}
+
+  .scene{position:relative;flex:1;min-height:130px;border-radius:18px;overflow:hidden;
+    background:repeating-linear-gradient(90deg,var(--grass1) 0 40px,var(--grass2) 40px 80px);border:3px solid #1e7a3c}
+  .crowd{position:absolute;top:0;left:0;right:0;height:13%;background:
+    radial-gradient(circle at 10px 12px,#ff7675 5px,transparent 6px) 0 0/22px 18px,
+    radial-gradient(circle at 10px 12px,#74b9ff 5px,transparent 6px) 11px 9px/22px 18px,#16324f}
+  .goal{position:absolute;left:12%;right:12%;top:18%;height:55%;border:6px solid #fff;border-bottom:none;border-radius:4px 4px 0 0;
+    background:repeating-linear-gradient(45deg,rgba(255,255,255,.35) 0 2px,transparent 2px 12px),repeating-linear-gradient(-45deg,rgba(255,255,255,.35) 0 2px,transparent 2px 12px),rgba(0,0,0,.08)}
+  .goal.shake{animation:shake .4s}
+  @keyframes shake{25%{transform:translateY(3px)}50%{transform:translateY(-2px)}75%{transform:translateY(2px)}}
+  .line{position:absolute;left:0;right:0;top:73%;height:4px;background:rgba(255,255,255,.8)}
+  .spot{position:absolute;left:50%;bottom:6%;width:8px;height:8px;margin-left:-4px;border-radius:50%;background:#fff}
+  .keeper{position:absolute;left:50%;bottom:27%;width:44px;height:58px;margin-left:-22px;transition:transform .45s cubic-bezier(.3,1.4,.6,1)}
+  .keeper .head{width:22px;height:22px;border-radius:50%;background:#f1c27d;margin:0 auto;border:2px solid #8d5524}
+  .keeper .body{width:30px;height:30px;margin:2px auto 0;border-radius:8px;background:#ff9f43;position:relative}
+  .keeper .body:before,.keeper .body:after{content:'';position:absolute;top:2px;width:12px;height:12px;border-radius:50%;background:#2ecc71;border:2px solid #fff}
+  .keeper .body:before{left:-14px}.keeper .body:after{right:-14px}
+  .ball{position:absolute;left:50%;bottom:4%;font-size:30px;margin-left:-15px;transition:transform .55s cubic-bezier(.2,.8,.3,1);z-index:3;line-height:1}
+  .shooter{position:absolute;left:8px;bottom:8px;background:rgba(0,0,0,.45);color:#fff;border-radius:999px;padding:4px 12px;font-weight:600;font-size:14px}
+  .bigmsg{position:absolute;inset:0;display:grid;place-items:center;pointer-events:none;z-index:5}
+  .bigmsg span{font-size:clamp(32px,6vh,48px);font-weight:700;color:#fff;text-shadow:0 4px 0 rgba(0,0,0,.35);transform:scale(0);transition:transform .3s cubic-bezier(.3,1.6,.6,1)}
+  .bigmsg span.show{transform:scale(1)}
+
+  .qcard{background:#fff;border-radius:22px;padding:clamp(12px,2vh,20px);box-shadow:0 8px 0 rgba(0,0,0,.18);height:100%;display:flex;flex-direction:column;gap:clamp(8px,1.4vh,12px);min-height:0;overflow:auto}
+  .qmeta{display:flex;justify-content:space-between;align-items:center;font-size:14px;font-weight:600;color:#6b7a8c}
+  .sdtag{background:#ff9f43;color:#fff;border-radius:999px;padding:2px 10px}
+  .qtext{font-size:clamp(18px,3.1vh,26px);font-weight:600;line-height:1.3}
+  .qtext mark{background:#ffe08a;padding:0 4px;border-radius:4px;font-weight:700}
+  .opts{display:grid;gap:clamp(7px,1.3vh,12px)}
+  .opt{display:flex;align-items:center;gap:10px;width:100%;text-align:left;border:none;border-radius:14px;padding:clamp(8px,1.5vh,14px) 14px;font:inherit;font-size:clamp(15px,2.3vh,19px);cursor:pointer;color:#fff;font-weight:500;line-height:1.25;transition:transform .08s;box-shadow:0 5px 0 rgba(0,0,0,.2)}
+  .opt:active{transform:translateY(3px);box-shadow:0 2px 0 rgba(0,0,0,.2)}
+  .opt .let{width:30px;height:30px;border-radius:50%;background:rgba(255,255,255,.3);display:grid;place-items:center;font-weight:700;flex:none}
+  .o0{background:#3fa9f5}.o1{background:#8e6cff}.o2{background:#ff9f43}.o3{background:#ff6b9d}
+  .opt.dim{opacity:.35}
+  .opt.right{background:var(--green);opacity:1;outline:4px solid #fff;box-shadow:0 0 0 7px var(--green)}
+  .opt.wrong{background:var(--red);opacity:1}
+  .opt:disabled{cursor:default}
+  .opt.gone{display:none}
+  .bottom{margin-top:auto;display:flex;flex-direction:column;gap:8px;position:sticky;bottom:0;background:#fff;padding-top:4px}
+  .feedback{border-radius:16px;padding:8px 12px;font-size:clamp(15px,2.2vh,18px);font-weight:600;display:none}
+  .feedback.show{display:block;animation:pop .3s}
+  .feedback.good{background:#e6fbef;color:#137a3c;border:3px solid var(--green)}
+  .feedback.bad{background:#fff1f0;color:#b3261e;border:3px solid var(--red)}
+  .feedback .ans{font-size:clamp(14px,2vh,16px);font-weight:500;margin-top:2px;color:var(--ink)}
+  .oppline{font-size:clamp(14px,2.1vh,17px);font-weight:600;min-height:22px}
+
+  /* ---------- BRAND ---------- */
+  .brand{display:inline-flex;align-items:center;gap:8px;background:#fff;border-radius:999px;padding:4px 14px 4px 5px;box-shadow:0 3px 0 rgba(0,0,0,.18);font-weight:700;color:#2B3A55;font-size:16px;white-space:nowrap}
+  .brand img{height:30px;width:auto}
+  .brand b{color:#E8A33C}
+  .brand.sm{padding:2px 10px 2px 3px;font-size:13px;gap:5px}
+  .brand.sm img{height:22px}
+  .foot{color:#fff;opacity:.7;font-size:13px;text-align:center}
+  .splash{position:fixed;inset:0;background:#fff;display:none;flex-direction:column;align-items:center;justify-content:center;gap:6px;z-index:40}
+  .splash.show{display:flex}
+  .splash img{width:min(56vw,264px);max-height:60vh;height:auto}
+.splash img.splash-logo{width:min(44vw,200px);animation:logoIn 1.4s cubic-bezier(.2,.8,.2,1) both}
+@keyframes logoIn{0%{opacity:0;transform:scale(.4) rotate(-120deg)}60%{opacity:1;transform:scale(1.08) rotate(8deg)}100%{transform:scale(1) rotate(0)}}
+  .splash .pl{font-size:clamp(22px,4vh,30px);font-weight:700;color:#2B3A55;opacity:0;animation:fadein .6s 1.6s forwards}
+  .splash .pl b{color:#E8A33C}
+  @keyframes fadein{to{opacity:1}}
+
+  /* ---------- OVERLAY ---------- */
+  .overlay{position:fixed;inset:0;background:rgba(5,15,30,.75);display:none;place-items:center;padding:18px;z-index:20}
+  .overlay.show{display:grid}
+  .modal{background:#fff;border-radius:26px;padding:22px;max-width:460px;width:100%;text-align:center;animation:pop .35s}
+  .modal .em{font-size:58px;line-height:1}
+  .modal h3{font-size:25px;margin:6px 0}
+  .modal p{font-size:18px;line-height:1.4}
+  .modal .btn{margin-top:14px}
+  .score-big{font-size:36px;font-weight:700;margin:6px 0;color:var(--night)}
+
+  /* ---------- FINAL ---------- */
+  .finalLeft{justify-content:center;align-items:center;text-align:center;color:#fff;gap:10px}
+  .trophy{font-size:clamp(70px,16vh,130px);animation:bounce 1.2s ease infinite}
+  @keyframes bounce{50%{transform:translateY(-10px)}}
+  .champ h2{font-size:clamp(24px,4.4vh,36px)}
+  .champ h2 span{color:var(--gold)}
+  .champ p{font-size:clamp(15px,2.3vh,19px);opacity:.9;margin-top:4px}
+  .finalLeft .btn{max-width:380px}
+  .stats{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .stat{background:#f3f6fa;border-radius:14px;padding:10px;text-align:center}
+  .stat b{display:block;font-size:clamp(22px,3.6vh,30px)}
+  .stat span{font-size:13px;opacity:.75}
+  table.res{width:100%;border-collapse:collapse;margin-top:10px;font-size:clamp(14px,2.1vh,17px)}
+  table.res td{padding:6px 4px;border-bottom:1px solid #eef2f7;text-align:center}
+  table.res td:first-child{text-align:left;font-weight:600}
+  .wtag{border-radius:999px;padding:2px 10px;color:#fff;font-size:14px;font-weight:600}
+  .wtag.k{background:var(--green)} .wtag.o{background:var(--red)}
+  .confetti{position:fixed;top:-20px;width:10px;height:14px;z-index:30;pointer-events:none;animation:fall linear forwards}
+  @keyframes fall{to{transform:translateY(110vh) rotate(720deg)}}
+
+  /* ---------- SHORT SCREENS (phones held sideways) ---------- */
+  @media (max-height:520px){
+    .wrap{padding:6px}
+    #play .levels{display:none}
+    #play .col{gap:5px}
+    .chip{padding:3px 10px;font-size:12px}
+    .icon-btn{width:28px;height:28px;font-size:14px}
+    .board{padding:3px 8px;border-width:2px}
+    .team .avatar{width:28px;height:28px;font-size:12px;border-width:2px}
+    .team .tn{font-size:14px} .team .ts{display:none}
+    .games{font-size:20px} .games small{display:none}
+    .kicks{padding:2px 8px}
+    .dot{width:19px;height:19px;font-size:11px}
+    .krow{margin:1px 0} .krow .tot{font-size:16px}
+    .scene{min-height:90px}
+    .qcard{padding:10px;gap:6px}
+    .qtext{font-size:17px}
+    .opt{padding:6px 12px;font-size:15px}
+    .opt .let{width:24px;height:24px}
+    .feedback{padding:4px 10px;font-size:14px}
+    .btn{padding:8px;font-size:17px}
+  }
+
+  /* ---------- PORTRAIT PHONES: stack the two halves ---------- */
+  @media (max-aspect-ratio: 4/5){
+    .split{grid-template-columns:1fr;grid-template-rows:auto 1fr;gap:8px}
+    #play .scene{flex:none;height:17vh;min-height:96px}
+    #play .levels{display:none}
+    #play .col{gap:6px}
+    #play .board{padding:6px 8px}
+    #start.split{grid-template-rows:auto 1fr}
+    #start .title p{display:none}
+    #start .title .mini-rules{display:block}
+    .chip{font-size:12px;padding:4px 9px}
+    .brand.sm .bt{display:none}
+    .brand.sm{padding:2px}
+    #play .qtext{font-size:19px}
+    #play .opt{font-size:16px;padding:9px 12px}
+    #final{overflow-y:auto;align-content:start}
+    .trophy{font-size:11vh}
+    .champ h2{font-size:24px}
+    #final .foot{display:none}
+    #start .rulesPanel{display:none}
+    #start .spinball{display:none}
+    .opp{padding:6px 8px}
+    .opp .nm{font-size:16px}
+    .opp .tag{font-size:12px}
+    .finalLeft{gap:6px}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- START -->
+  <section id="start" class="screen split active">
+    <div class="col" style="justify-content:center">
+      <div style="text-align:center"><span class="brand"><img src="https://www.deltanuva.com/NoNameLogo_Transparent_NoBuffer.png" alt="">DeltaNuva <b>PlayLab</b></span></div>
+      <div class="title">
+        <div class="spinball">⚽</div>
+        <h1><span>AI OLYMPIAD CUP</span></h1>
+        <p>Big ideas made simple through games and stories.</p>
+        <p class="mini-rules">5 matches × 5 penalties. Right answer = GOAL! ⚽</p>
+      </div>
+      <div class="panel rulesPanel">
+        <h2>How to play 📋</h2>
+        <ul class="rules">
+          <li>A tournament has <b>5 matches</b>. Each match has <b>5 penalties</b> — 25 questions in all.</li>
+          <li>Right answer = <b>GOAL!</b> Wrong answer = the keeper saves it.</li>
+          <li>Your opponent shoots after every kick.</li>
+          <li>Most goals wins the match. A tied match goes to <b>sudden death</b>! ⚡</li>
+          <li>Win the most matches to become <b>Champion</b> 🏆</li>
+        </ul>
+      </div>
+      <p class="foot">DeltaNuva PlayLab · Skills Through Stories</p>
+    </div>
+    <div class="col" style="justify-content:center">
+      <div class="panel">
+        <h2>Player 1</h2>
+        <div class="me"><div class="avatar av-k" id="p1Init">K</div><div style="flex:1"><label for="p1Input" style="font-size:14px;opacity:.75;font-weight:600">Type your name</label><input id="p1Input" class="nameIn" maxlength="14" value="Kaushik" autocomplete="off" spellcheck="false"></div></div>
+        <h2 style="margin-top:12px">Pick your opponent</h2>
+        <div class="opp-list" id="oppList"></div>
+        <button class="btn" id="kickoff" style="margin-top:12px" disabled>Kick off! ⚽</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- PLAY -->
+  <section id="play" class="screen split">
+    <div class="col">
+      <div class="topbar">
+        <span class="brand sm"><img class="bi" src="https://www.deltanuva.com/NoNameLogo_Transparent_NoBuffer.png" alt=""><span class="bt">PlayLab</span></span>
+        <span class="chip" id="gameChip">Match 1 of 5</span>
+        <span class="chip" id="qChip">Question 1 of 25</span>
+        <button class="icon-btn" id="muteBtn" title="Sound on/off">🔊</button>
+      </div>
+      <div class="board">
+        <div class="team"><div class="avatar av-k p1init">K</div><div style="min-width:0"><div class="tn p1name">Kaushik</div><div class="ts">Matches won</div></div></div>
+        <div class="games"><span id="gw">0 – 0</span><small>MATCHES</small></div>
+        <div class="team right"><div class="avatar" id="oppAv">L</div><div style="text-align:right;min-width:0"><div class="tn" id="oppName">Lamine</div><div class="ts">Matches won</div></div></div>
+      </div>
+      <div class="levels" id="levels"></div>
+      <div class="kicks">
+        <div class="krow"><span class="who p1name">Kaushik</span><div class="dots" id="kDots"></div><span class="tot" id="kTot">0</span></div>
+        <div class="krow"><span class="who" id="oWho">Lamine</span><div class="dots" id="oDots"></div><span class="tot" id="oTot">0</span></div>
+      </div>
+      <div class="scene" id="scene">
+        <div class="crowd"></div>
+        <div class="goal" id="goal"></div>
+        <div class="line"></div>
+        <div class="keeper" id="keeper"><div class="head"></div><div class="body"></div></div>
+        <div class="spot"></div>
+        <div class="ball" id="ball">⚽</div>
+        <div class="shooter" id="shooter">Ready…</div>
+        <div class="bigmsg"><span id="bigmsg">GOAL!</span></div>
+      </div>
+    </div>
+    <div class="col">
+      <div class="qcard">
+        <div class="qmeta"><span id="penLabel">Penalty 1 of 5</span><span id="sdTag"></span></div>
+        <div class="qtext" id="qtext"></div>
+        <div class="opts" id="opts"></div>
+        <div class="bottom">
+          <div class="feedback" id="feedback"></div>
+          <div class="oppline" id="oppline"></div>
+          <button class="btn blue" id="nextBtn" style="display:none">Next penalty ➜</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FINAL -->
+  <section id="final" class="screen split">
+    <div class="col finalLeft">
+      <span class="brand"><img src="https://www.deltanuva.com/NoNameLogo_Transparent_NoBuffer.png" alt="">DeltaNuva <b>PlayLab</b></span>
+      <div class="trophy" id="trophy">🏆</div>
+      <div class="champ"><h2 id="champTitle"></h2><p id="champSub"></p></div>
+      <button class="btn" id="againBtn">Play next tournament ⚽</button>
+      <button class="btn ghost" id="changeBtn">Change player or opponent</button>
+      <p class="foot">DeltaNuva PlayLab · Skills Through Stories</p>
+    </div>
+    <div class="col" style="justify-content:center">
+      <div class="panel">
+        <div class="stats">
+          <div class="stat"><b id="stAcc">0</b><span><span class="p1name">Kaushik</span>'s right answers</span></div>
+          <div class="stat"><b id="stGames">0 – 0</b><span>Matches won</span></div>
+          <div class="stat"><b id="stGoals">0</b><span><span class="p1name">Kaushik</span>'s goals</span></div>
+          <div class="stat"><b id="stOpp">0</b><span id="stOppLbl">Opponent's goals</span></div>
+        </div>
+        <table class="res" id="resTable"></table>
+      </div>
+    </div>
+  </section>
+</div>
+
+<div class="overlay" id="overlay"><div class="modal" id="modal"></div></div>
+<div class="splash" id="splash"></div>
+
+<script>
+
+/* ============ QUESTION BANK — DeltaNuva PlayLab originals (Class 3–5 AI basics) ============
+   Format: [question, correct answer, wrong 1, wrong 2, wrong 3, "A"]  — options are shuffled in the game. */
+const BANK = [
+// ---------- AI basics & everyday AI ----------
+["What does the short form “AI” mean?","Artificial Intelligence","Android Internet","Automatic Ice-cream","Amazing Input","A"],
+["When you type a question into a search engine, how does AI help?","It finds useful answers for you quickly","It hides all the answers","It paints a picture for you","It shows pages at random","A"],
+["Why do search engines use AI?","To find the best answers quickly","To make the screen colourful","To play music on websites","To make searching slower","A"],
+["How does a search engine get better over time?","It learns from what people click and improves the results","It picks websites at random","It deletes websites nobody likes","It only shows adverts","A"],
+["What is a sign that an AI search engine is doing a good job?","It finds the right answer fast, even from billions of pages","It shows results that have nothing to do with your search","It shows only adverts","It shows only pictures","A"],
+["You start typing a search and Google finishes your question for you. What is happening?","AI is guessing what you want to ask","The computer is switching off","Your search is being printed","Only pictures will be shown","A"],
+["How does AI help on social media apps?","It suggests posts and videos you may like","It guesses your password","It deletes your apps","It draws cartoons of you","A"],
+["How do video apps use AI to keep you watching?","They suggest videos based on what you watched before","They delete your videos","They stop your internet","They show only random videos","A"],
+["What does Netflix use AI for?","To recommend shows and movies you might enjoy","To change your password","To block all videos","To restart every show","A"],
+["How does AI help doctors?","It helps them find illnesses faster","It builds new hospitals","It decides everything without any doctor","It does all operations on its own","A"],
+["Which kind of AI looks at scans and X-rays to help spot diseases early?","Diagnostic AI","Entertainment AI","Transport AI","Household AI","A"],
+["Why is AI useful when scientists design new medicines?","It studies huge amounts of medical data and finds patterns quickly","It draws nicer diagrams","It guesses randomly","It replaces all doctors","A"],
+["How can AI help students learn?","It can change lessons to suit how each student learns","It does all your homework for you","It teaches only one topic","It treats students unfairly","A"],
+["What is personalised learning with AI?","Lessons that match each student's needs","The same lesson for everyone","Only taking attendance","Replacing every teacher","A"],
+["How is AI used in some cars?","To help the car drive by itself","To paint the car","To fill air in the tyres","To pump petrol","A"],
+["In a self-driving car, why is real-time data important?","It helps the AI react to traffic and road changes as they happen","It lets passengers watch movies","It stores songs for later","It only shows the map","A"],
+["Which of these is an example of AI at home?","A robot vacuum cleaner","A pencil box","A school bag","A wall clock","A"],
+["Which machine can clean the floor on its own without anyone steering it?","Robot vacuum","Smartwatch","Calculator","Ceiling fan","A"],
+["How do robot vacuums stop themselves from falling down the stairs?","They use special drop sensors","They never go near stairs","Someone stops them with a remote","They clean the stairs by hand","A"],
+["How can you control a robot vacuum when you are not next to it?","With a phone app or voice commands","Only by pressing its buttons","By shouting at it","By plugging it into a computer","A"],
+["What do sensors do in smart machines?","They collect information about the world around them","They cook food","They take selfies","They charge the battery","A"],
+["Which of these is an example of AI we use today?","A smart assistant that answers questions","An ordinary alarm clock","A wooden toy","A chalkboard","A"],
+["Where do we see AI in daily life?","In phones, cars and home devices","Only in science labs","Only in space","Only in museums","A"],
+["What is a chatbot?","A computer program that chats with you","A robot that plays music","A game character","A kind of pencil","A"],
+["Many companies answer customer questions instantly using which AI tool?","A chatbot","A drawing app","A sound editor","A word processor","A"],
+["What can voice assistants like Alexa do?","Answer your questions","Fly drones","Write your exams","Cook dinner","A"],
+["Which of these can Siri do?","Make a phone call for you","Drive a car","Build a supercomputer","Fix broken toys","A"],
+["Which of these is NOT something voice assistants like Alexa or Siri can do?","Paint a picture on your wall","Set a reminder","Make a phone call","Answer a question","A"],
+["Which of these is NOT a feature of Google Assistant?","Washing the dishes","Setting reminders","Playing music","Controlling smart lights","A"],
+["How do voice assistants like Siri and Alexa use AI?","They understand spoken words and reply","They only play recorded messages","They can only show text","You must type every command","A"],
+["Why should a voice assistant recognise different people's voices?","To give each person the right answers and keep things private","To play louder music","To save battery","To show more colours","A"],
+["What are Alexa's “skills”?","Extra abilities you can add, like games and quizzes","Wheels that help Alexa move","Lights that change colour","Tools for cooking","A"],
+["Which company made the voice assistant Alexa?","Amazon","Google","Apple","Microsoft","A"],
+["Which company made Siri?","Apple","Amazon","Google","Microsoft","A"],
+["Which voice assistant works best on iPhones and other Apple devices?","Siri","Alexa","Google Assistant","Cortana","A"],
+["What kind of data does a voice assistant like Siri mostly use when you talk to it?","Sound data","Picture data","Number data","Textbook data","A"],
+["How does AI help when you chat with friends online?","It fixes spelling mistakes automatically","It changes your profile picture","It turns off your device","It draws pictures for you","A"],
+["Which AI feature keeps junk emails out of your inbox?","Spam filter","Drawing tool","Video player","Sound editor","A"],
+["How can AI help keep your online accounts safe?","It spots strange login attempts and warns you","It sends you spam","It shares your password","It deletes your account","A"],
+["How does AI help keep the internet safe?","It blocks harmful or unsuitable content","It writes every website","It makes searches slower","It draws cartoons","A"],
+["What is a good example of AI keeping children safe online?","Hiding rude or harmful comments automatically","Sending adverts to children","Letting anyone see children's details","Turning off privacy settings","A"],
+["Which AI tool helps people who cannot see well use a smartphone?","Screen readers like VoiceOver or TalkBack","Drawing apps","Video games","Fitness trackers","A"],
+["How can AI help people with disabilities?","Voice control lets them use devices without touching them","It only works with a mouse","It needs long typed commands","It ignores what users want","A"],
+["A city uses AI to control traffic lights and reduce jams. What does this show?","AI can make cities smarter and traffic smoother","AI only counts cars","AI causes more traffic","AI is only for games","A"],
+["How might AI help the world in the future?","By helping solve big problems like climate change","By making pets talk","By letting us travel back in time","By only playing games","A"],
+["How is AI changing the online world?","It makes online things smarter, faster and safer","It adds fun but no safety","It makes devices slower","It only works without internet","A"],
+["What makes an AI “smart”?","It can learn from data","It is made of metal","It talks loudly","It has lots of buttons","A"],
+["What is the main aim of AI?","To help machines think, learn and solve problems like people","To replace every human","To build robots just for fun","To play games only","A"],
+["How is today's AI different from AI in the 1950s?","Modern AI can learn from data and improve","Today's AI works only on phones","Today's AI is slower","1950s AI used the internet","A"],
+["Which example best shows a machine getting smarter over time?","A machine that learns to sort fruit by practising again and again","A fan that spins faster","A washing machine starting when you press a button","A robot dancing to music","A"],
+["What does it mean when AI is “explainable”?","People can understand how it made its decision","It can draw pictures","It works in secret","It is never wrong","A"],
+// ---------- Types of AI ----------
+["A computer program that is great at chess but cannot do anything else is an example of…","Narrow AI","General AI","Super AI","Toy AI","A"],
+["What type of AI is Siri?","Narrow AI","General AI","Superintelligence","Theory of Mind AI","A"],
+["Which of these is an example of Narrow AI?","Siri answering your questions","A robot that can do every human job","A computer with real feelings","A robot that knows it exists","A"],
+["What is another name for Narrow AI?","Weak AI","Strong AI","Superintelligence","Theory of Mind","A"],
+["Which type of AI does only one special job and cannot work outside it?","Narrow AI","General AI","Super AI","Self-aware AI","A"],
+["What is the biggest limit of Narrow AI?","It cannot do tasks it was not trained for","It uses too much electricity","It cannot use the internet","It stores data in human language","A"],
+["What is the main difference between Narrow AI and General AI?","Narrow AI does one task; General AI could do many tasks like a person","Narrow AI can do any task","General AI is in every phone today","Narrow AI has feelings","A"],
+["What makes Narrow AI different from General AI?","It is built for one specific task only","It has less memory","It needs the internet to work","It is always on the screen","A"],
+["Which type of AI does not exist yet but could do any thinking task a human can?","General AI","Narrow AI","Reactive Machine AI","Limited Memory AI","A"],
+["Which of these is NOT a real example of Narrow AI today?","Artificial Superintelligence","Siri","Alexa","Self-driving cars","A"],
+["What is “Artificial Superintelligence”?","AI that would be smarter than humans at everything","AI that only plays board games","AI that only recognises pictures","AI that cannot learn","A"],
+["A robot only answers questions about the weather. What kind of AI is it?","Narrow AI","General AI","Strong AI","Imaginary AI","A"],
+["A voice assistant knows the weather but cannot answer maths questions. What kind of AI is it?","Narrow AI","General AI","Strong AI","Creative AI","A"],
+["A robot vacuum that only cleans floors is an example of…","Narrow AI","General AI","Strong AI","Super AI","A"],
+["A robot that could learn and do almost any job a human can would be…","General AI","Narrow AI","Weak AI","A calculator","A"],
+["Self-driving cars remember what they saw a moment ago. Which type of AI is this?","Limited Memory AI","Reactive Machine AI","Theory of Mind AI","Super AI","A"],
+["What is a big risk of depending only on Narrow AI?","It cannot handle new or unusual situations","It works too well","It makes emotional decisions","It needs no data","A"],
+// ---------- Data ----------
+["What is the most important thing an AI needs to learn?","Data","Electricity only","Speed","Loud sounds","A"],
+["Why do people call data the “fuel” of AI?","Because AI learns and improves by studying data","Because it makes computers run faster","Because AI needs videos to work","Because AI stops without the internet","A"],
+["Which of these is an example of data?","Your friend's name","A football","A backpack","A pencil sharpener","A"],
+["Which of these is number data?","The number of students in your class","The sound of a bell","A photo of a cat","The colour of the sky","A"],
+["Which of these is image data?","A photo of a dog","A song","The number 25","A spoken word","A"],
+["If teaching an AI is like baking a cake, what is the data like?","The ingredients","The oven timer","The cake tin","The icing on top","A"],
+["About how much data do people around the world create every day?","Billions of gigabytes","A few pages","Only what is in books","None at all","A"],
+["Where do we usually find structured data?","In tables and spreadsheets","In hand-drawn maps","In voice notes","In sketches","A"],
+["A robot learned fruit from photos of apples, bananas and mangoes. It cannot recognise a pineapple. Why?","It never saw pineapples in its training data","It forgot everything","It needs the internet","It doesn't like pineapples","A"],
+// ---------- Fairness & bias ----------
+["Why should AI learn from examples of many different people?","So it is fair to everyone","So it makes mistakes faster","So only experts can use it","So it ignores differences","A"],
+["What can happen if AI learns from only one kind of data?","It can become unfair","It becomes smarter","It disappears","It runs slower","A"],
+["What is the risk if AI is trained with data from only one group of people?","Its results may be unfair to other groups","It works faster","It uses less memory","It becomes more creative","A"],
+["Which of these is an example of unfair AI?","AI that helps only one kind of person","AI that helps everyone equally","AI that plays music","AI that writes stories","A"],
+["What is the word for when AI unfairly favours one group over another?","Bias","Security","Access","Prediction","A"],
+["Why does fairness matter in AI?","So nobody is treated unfairly","To make AI colourful","To make AI more complicated","To make AI faster","A"],
+["What is the best way to make an AI fairer?","Train it with a wide and balanced mix of data","Ignore what users say","Let only one group use it","Never check it for bias","A"],
+["Why is a variety of training data important for AI?","It helps AI make accurate and fair decisions in many situations","It saves storage space","It keeps AI in one place","It makes the screen bigger","A"],
+["Which of these could make an AI system unfair?","Training it with limited or one-sided data","Updating it with new, varied data","Letting users give feedback","Testing it for fairness","A"],
+["How can a video app's AI avoid unfair recommendations?","Learn from many different groups of viewers","Learn from only one group","Guess randomly","Copy another app","A"],
+["What is one way a video app could be unfair?","Only suggesting videos that one group likes","Showing everyone the same home page","Using bright colours","Letting you choose what you like","A"],
+["An AI drawing contest picks the best pictures. How can it be fair to all children?","Train it with drawings by children of different ages and backgrounds","Use only drawings of animals","Let only older children enter","Pick whoever draws fastest","A"],
+["How can we avoid bias in stories or in AI?","Include characters from many different backgrounds","Always use the same kind of hero","Ignore other people's ideas","Use only one type of character","A"],
+["Which is a sign that an AI game is unfair?","The same player always wins","Everyone gets equal turns","Everyone follows the same rules","Players can pick a level","A"],
+["A voice assistant learned only from grown-ups' voices. What problem might happen?","It may not understand children","It will talk faster","It will stop at night","It will sing songs","A"],
+["A student watches science videos but suddenly gets cartoon suggestions. What might the AI have done wrong?","Used another person's viewing history","Changed the password","Read the student's mind","Taken a holiday","A"],
+// ---------- AI ethics ----------
+["Which of these is a worry when AI is used on social media?","AI spreading false news very quickly","AI showing posts you like","AI blocking spam","AI suggesting friends","A"],
+["Which shows good behaviour when using AI tools?","Making sure AI respects privacy and fairness","Using AI to spread fake news","Posting others' messages without asking","Telling AI your passwords","A"],
+// ---------- AI history ----------
+["Why was the Dartmouth Conference of 1956 important?","It was the official start of AI research","It invented the first robot","It launched a rocket","People cooked with AI there","A"],
+["In which year was the term “Artificial Intelligence” first used?","1956","1945","1950","1969","A"],
+["Where was the name “Artificial Intelligence” first officially used?","At the Dartmouth Conference in 1956","In a video game","At a world science fair","On a TV show in the 1990s","A"],
+["Who came up with the name “Artificial Intelligence”?","John McCarthy","Ada Lovelace","Alan Turing","Marvin Minsky","A"],
+["Why is Alan Turing remembered in AI history?","His ideas laid the foundation for thinking machines","He built the first robot helper","He made the first AI car","He created the first video game","A"],
+["What was the Turing Test meant to check?","Whether a machine can chat like a human","Whether robots can walk","Whether people can win games","Whether computers can become TVs","A"],
+["Why is the Turing Test called a milestone?","It gave a way to test if a machine can seem intelligent","It started coding in schools","It taught robots many languages","It was the first chatbot","A"],
+["What did Ada Lovelace understand about machines?","They could be programmed to do complex tasks","They could only add numbers","They could only play games","They could only store information","A"],
+["Why is Ada Lovelace famous in computing?","She wrote what is called the first computer program","She built the first robot","She named the field AI","She made the first AI chip","A"],
+["What was the name of the first chatbot, made in the 1960s?","ELIZA","Siri","Alexa","Sophia","A"],
+["Around when was the first chatbot, ELIZA, created?","1966","1950","1997","2015","A"],
+["What was ELIZA famous for?","Being one of the first chatbots that could talk with people","Painting pictures","Driving cars","Writing games","A"],
+["What did IBM's Deep Blue do in 1997?","It beat the world chess champion","It solved a puzzle","It cleaned houses","It sang songs","A"],
+["Which computer beat chess champion Garry Kasparov in 1997?","Deep Blue","AlphaGo","Watson","Kismet","A"],
+["What did Deep Blue's win over Garry Kasparov show the world?","AI can beat humans at logic games","Machines can replace sports coaches","AI can be controlled by touch","AI has feelings","A"],
+["What did IBM's Watson do in 2011?","It won a TV quiz show against human champions","It cleaned houses","It painted pictures","It built robots","A"],
+["Which robot was the first to be given citizenship by a country?","Sophia","Kismet","Roomba","Unimate","A"],
+// ---------- Privacy & personal information ----------
+["What does privacy mean online?","Keeping your personal information safe","Sharing your secrets with everyone","Telling everyone your name","Posting your password","A"],
+["Which of these is personal information you should keep private?","Your phone number","Your favourite subject","Your favourite sport","Your class project","A"],
+["Which of these is private information?","Your school's name","Your favourite cartoon","Your favourite colour","Your hobby","A"],
+["Which of these is usually safe to share in an online game chat?","Your favourite colour","Your home address","Your password","Your phone number","A"],
+["What should AI do with your personal information?","Keep it safe and private","Post it online","Share it with friends","Sell it to websites","A"],
+["Why shouldn't you post your home address online?","Strangers could see it","It takes too long to type","It makes your page messy","It can break your computer","A"],
+["Why should you keep your school's name off the internet?","It is private information","It changes every year","It isn't important","Nobody knows your school","A"],
+["What is one thing you should never post online?","Your full address and password","A school project","A funny joke","A drawing","A"],
+["What does respecting someone's privacy online mean?","Asking before sharing anything about them","Sharing their details only with friends","Saving their photos","Posting only their first name","A"],
+["Why should you ask before sharing a friend's photo online?","To respect their privacy","Because it is your photo too","Because it looks blurry","To get more likes","A"],
+["What should you do before posting a photo of someone?","Ask for their permission","Post it straight away","Edit it secretly","Send it to everyone","A"],
+["What is a good way to protect your privacy online?","Keep your passwords secret","Share your email with everyone","Use weak passwords","Post your phone number","A"],
+["Which of these is NOT a safe way to protect your data?","Telling strangers your birthday","Using strong passwords","Using websites your parents approve","Asking an adult when unsure","A"],
+// ---------- Online safety & passwords ----------
+["Why do websites ask you to make a strong password?","So others cannot guess it easily","To make you type more","To confuse you","To teach you about AI","A"],
+["Why should we use strong passwords?","To protect our information from hackers","So friends can use it easily","Because websites look nicer","To log in faster","A"],
+["Why is a strong password important?","It keeps your information safe","It looks cool","It is easy to remember","It uses your name","A"],
+["What makes a password strong?","A mix of letters, numbers and symbols","Short, easy words","Just your name","Just your pet's name","A"],
+["Which of these is the strongest password?","T!ger$4Moon","password","12345678","anu2015","A"],
+["Who is the only person you may share your password with?","A parent or guardian","All your classmates","Your best friend","Anyone who asks","A"],
+["Why shouldn't you click on links you don't know?","They might take you to harmful websites","They are slow","They make the screen brighter","They make the internet faster","A"],
+["What is a smart thing to do before clicking a link?","Check that it looks safe","Click as fast as you can","Close the app","Ask your friends to click first","A"],
+["Why should we think before we click online?","To stay away from unsafe content","To save power","To keep the device warm","To make apps faster","A"],
+["Which of these is a warning sign that a website may NOT be safe for children?","It asks for your home address or school","It has “https” in the address","It shows a padlock symbol","Your teacher recommended it","A"],
+["What should you do before downloading a new app?","Ask a trusted adult","Download it secretly","Try it first","Click all the adverts","A"],
+["You get a message from a stranger online. What should you do?","Tell a trusted adult","Reply with your name","Click their links","Give them your password","A"],
+["What should you do if something online makes you feel uncomfortable?","Tell a trusted adult","Delete your account","Keep it a secret","Close the app and forget it","A"],
+["Which is a good way to use the internet wisely?","Visit safe websites","Post angry comments","Share passwords","Click pop-up adverts","A"],
+// ---------- Digital citizenship & kindness ----------
+["What is a good digital citizen?","Someone who uses technology kindly and wisely","Someone who is rude online","Someone who copies others' work","Someone who only plays alone","A"],
+["Which action shows good digital citizenship?","Helping friends use safe websites","Bullying someone online","Posting secrets","Ignoring cyberbullying","A"],
+["Which is a responsible thing to do online?","Report harmful or unkind content","Share your address with strangers","Post someone's private photos","Give your password to everyone","A"],
+["Which shows responsible digital citizenship?","Telling a teacher about a suspicious link","Posting a classmate's photo without asking","Copying someone's homework","Ignoring privacy settings","A"],
+["What kind of things should a good digital citizen share?","Positive and helpful things","Mean and scary things","Private messages","Secret pictures","A"],
+["What does speaking kindly online mean?","Saying nice and respectful things","Using big letters","Typing very fast","Writing very short messages","A"],
+["Which of these shows respect for others online?","Leaving a kind comment on their post","Sharing their address","Posting their photo without asking","Ignoring them","A"],
+["Why should we respect others online?","To make the internet safe and kind","To get more followers","To get more likes","To win prizes","A"],
+["What does being kind online help to create?","A safe and happy online world","Shorter messages","More likes","A quieter internet","A"],
+["How can you be a role model online?","Use kind words and help others","Copy other people's work","Show off your scores","Post private things about others","A"],
+["What is cyberbullying?","Using technology to hurt or scare someone","Playing games online","Learning to code","Watching videos","A"],
+["How should you respond to online bullying?","Tell a trusted adult","Make fun of them back","Join the bully","Stay silent","A"],
+["What is one way to stop cyberbullying?","Report it to a trusted adult","Ignore it every time","Laugh along","Share it with friends","A"],
+["What should you do if you see someone being mean online?","Tell a trusted adult","Join in","Keep it secret","Ignore it","A"],
+["Someone sends you a hurtful message online. What should you do?","Tell a trusted adult","Send a hurtful reply","Forward it to others","Pretend it didn't happen","A"],
+["What is a safe way to deal with cyberbullying?","Save the messages and tell a trusted adult","Reply with mean comments","Share it with more people","Ignore it and hope it stops","A"],
+// ---------- Scratch & coding ----------
+["What is the main way you build programs in Scratch?","By snapping coding blocks together","By typing passwords","By clicking random buttons","By colouring the screen","A"],
+["What makes things happen in a Scratch project?","Blocks of code","Sounds","Costumes","Backdrops","A"],
+["Which Scratch block moves a sprite?","Move","Say","Colour","Jump","A"],
+["What does the “move 10 steps” block do?","Moves the sprite forward 10 steps","Changes its colour","Makes it jump","Spins it around","A"],
+["What are Motion blocks used for in Scratch?","To move and turn sprites","To play sounds","To make variables","To change the backdrop","A"],
+["What is a sprite in Scratch?","A character or object in your project","A button that ends the game","A coding block","A type of music","A"],
+["Before you can make a character move in Scratch, what do you need?","A sprite","A sound","A variable","A backdrop","A"],
+["What does a backdrop do in Scratch?","Changes how the stage background looks","Moves the sprite","Plays music","Stores the score","A"],
+["What is the difference between a costume and a backdrop?","A costume changes a sprite's look; a backdrop changes the stage","A costume plays sounds; a backdrop moves sprites","A costume is for music; a backdrop is for code","They are exactly the same","A"],
+["In Scratch, what is a script?","A stack of connected code blocks","A drawing tool","A sound effect","A type of sprite","A"],
+["What does “repeat” mean in coding?","Do something again and again","Stop the program","Say hello","Play music","A"],
+["What does a loop do in Scratch?","Repeats actions","Stops actions","Changes the background","Deletes sprites","A"],
+["Which Scratch block keeps repeating some blocks without ever stopping?","Forever","If","Repeat 10","Wait 1 second","A"],
+["How do you make Scratch keep checking something again and again?","Put an “if” block inside a “forever” block","Use one “say” block","Change the backdrop","Add a sound","A"],
+["What does “if-else” mean in coding?","Choose what to do depending on a condition","Repeat forever","Turn the game off","Skip the program","A"],
+["What does the “if…then” block do in Scratch?","Runs its blocks only when a condition is true","Repeats blocks forever","Changes the sprite's colour","Makes the sprite jump","A"],
+["Why are “if-else” blocks useful in Scratch games?","They make the game react to what the player does","They make sprites invisible","They stop the game","They delete code","A"],
+["How can you make a Scratch game act a bit like AI?","Use “if-then” blocks to react to actions","Add lots of pictures","Use only black and white","Remove all blocks","A"],
+["In a Scratch quiz, how can a sprite reply differently to right and wrong answers?","Use “if-else” blocks to check the answer","Use only a “repeat” block","Add music","Change the backdrop","A"],
+["Which block group in Scratch has “if-then” and “repeat”?","Control","Motion","Looks","Events","A"],
+["Which Scratch block group checks if a sprite is touching another sprite?","Sensing","Motion","Looks","Control","A"],
+["Which Scratch block checks if a sprite is touching something?","Touching [ ]?","Move 10 steps","Say [Hello!] for 2 seconds","Play sound","A"],
+["Which Scratch block group has “say Hello! for 2 seconds”?","Looks","Motion","Sound","Operators","A"],
+["What are Operator blocks used for in Scratch?","Doing maths and logic","Playing music","Changing costumes","Moving sprites","A"],
+["Why use a variable called “Score” in a Scratch game?","To keep track of the player's points","To store a background","To show text only","To change the volume","A"],
+["What is a variable useful for in a Scratch game?","Storing and updating things like the score","Changing a sprite's colour","Playing music","Animating the backdrop","A"],
+["In a Scratch “catch the apple” game, what usually happens when you catch an apple?","Your score goes up by one","The game ends","The apple disappears forever","Your character changes colour","A"],
+["What does an event do in a Scratch project?","Starts an action when something happens","Changes the background colour","Repeats something forever","Turns off the computer","A"],
+["What does it mean that Scratch programs are event-driven?","They react to things like clicks and key presses","They only work at weekends","They count down from 100","They run backwards","A"],
+["Which block starts a script when you press a key?","When [space] key pressed","Move 10 steps","Repeat until","Set size to 100%","A"],
+["What usually happens when you click the green flag in Scratch?","The project starts running","The project is deleted","The sprite changes colour","The computer shuts down","A"],
+["Which block makes a sprite react only when it receives a certain message?","When I receive [message]","When green flag clicked","Wait until","Forever","A"],
+["Why are “broadcast” and “when I receive” blocks useful?","They let sprites work together by sending messages","They send emails","They change the whole game","They save the file","A"],
+["What are “My Blocks” in Scratch for?","Making your own blocks for actions you repeat","Storing pictures","Playing random sounds","Changing the stage colour","A"],
+["Why is Scratch good for making simple AI-style games?","You drag and drop logic and sensing blocks","It writes Python for you","It only works with real robots","It listens to your voice","A"],
+["Why is coding in Scratch fun?","You can design, test and play your own games","You only watch others code","You never use blocks","You just read about games","A"]
+];
+
+/* ============ OPPONENTS ============ */
+const OPPS = {
+  ronaldo:{name:"Ronaldo",   init:"R",  cls:"av-ronaldo", tag:"The Rocket",       goals:()=> (Math.random()<0.5?18:19), p:0.74},
+  neymar: {name:"Neymar Jr", init:"NJ", cls:"av-neymar",  tag:"The Magician",     goals:()=> (Math.random()<0.5?20:21), p:0.82},
+  messi:  {name:"Messi",     init:"LM", cls:"av-messi",   tag:"The Maestro",      goals:()=> (Math.random()<0.5?20:21), p:0.82},
+  haaland:{name:"Haaland",   init:"H",  cls:"av-haaland", tag:"The Goal Machine", goals:()=> (Math.random()<0.5?20:21), p:0.82},
+  mbappe: {name:"Mbappé",    init:"M",  cls:"av-mbappe",  tag:"The Speedster",    goals:()=>22, p:0.88},
+  lamine: {name:"Lamine",    init:"L",  cls:"av-lamine",  tag:"The Wonderkid",    goals:()=>22, p:0.88}
+};
+const NQ = 25, NM = 5;   // 25 questions = 5 matches x 5 penalties
+const ORDER = ["ronaldo","neymar","messi","haaland","mbappe","lamine"];
+
+const PRAISE = [
+  "GOOOAL! Top corner, {P}! 🔥","What a strike! The crowd is going wild! 🎉","Back of the net! ⚽","Brilliant! Your brain is your best boot! 🧠",
+  "You're on fire! 🔥🔥","Champion move! ⭐","Superb shot! The keeper had no chance!","Perfect! That's how legends do it! 🏅",
+  "Bang! Right in the net! 💥","Amazing answer, {P}! Keep going!","Nailed it! You really know your AI! 🤖","Unstoppable! 🚀"
+];
+const MOTIVATE = [
+  "Saved! Even the best strikers miss sometimes. 💪","So close! The next one is yours!","Don't worry — champions learn from every miss! 🌟",
+  "Keep your head up, {P}! You've got this!","Shake it off! Focus on the next kick. ⚽","Every great player misses. Let's go again!",
+  "Nice try! Now you know this one for next time. 📚","Stay strong — big comebacks start right here! 🔥"
+];
+
+/* ============ HELPERS ============ */
+const $ = id => document.getElementById(id);
+const shuffle = a => { a = a.slice(); for (let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]];} return a; };
+const pick = a => a[Math.floor(Math.random()*a.length)];
+const esc = s => String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+const norm = s => s.toLowerCase().replace(/[^a-z0-9]/g,"");
+const LET = ["A","B","C","D"];
+let P1 = "Kaushik";
+const nm = s => s.replace(/\{P\}/g, esc(P1));
+const initialOf = s => (s.trim()[0] || "?").toUpperCase();
+const pct = (a,b) => b ? Math.round(100*a/b) : 0;
+
+function makeQ(row){
+  const opts = row.slice(1,5).map((t,i)=>({t, ok: LET[i]===row[5]}));
+  const sh = shuffle(opts);
+  return { text: row[0], key: norm(row[0]), opts: sh.map(o=>o.t), ans: sh.findIndex(o=>o.ok) };
+}
+
+let seen = new Set();   // question keys used in earlier tournaments this session
+function drawQuestions(n, exclude){
+  const used = new Set(exclude || []);
+  const pool = shuffle(BANK);
+  const out = [];
+  const take = (allowSeen) => {
+    for (const row of pool){
+      if (out.length >= n) break;
+      const k = norm(row[0]);
+      if (used.has(k)) continue;
+      if (!allowSeen && seen.has(k)) continue;
+      used.add(k); out.push(makeQ(row));
+    }
+  };
+  take(false);
+  if (out.length < n) take(true);
+  return out;
+}
+
+/* ============ SOUND ============ */
+let muted = false, actx = null;
+function tone(freq, dur, type="sine", when=0, vol=0.15){
+  if (muted) return;
+  try{
+    actx = actx || new (window.AudioContext||window.webkitAudioContext)();
+    const o = actx.createOscillator(), g = actx.createGain();
+    o.type = type; o.frequency.value = freq;
+    g.gain.setValueAtTime(vol, actx.currentTime+when);
+    g.gain.exponentialRampToValueAtTime(0.001, actx.currentTime+when+dur);
+    o.connect(g); g.connect(actx.destination);
+    o.start(actx.currentTime+when); o.stop(actx.currentTime+when+dur);
+  }catch(e){}
+}
+const sGoal = () => { [523,659,784,1047].forEach((f,i)=>tone(f,.25,"triangle",i*.09)); };
+const sMiss = () => { tone(220,.35,"sawtooth",0,.08); tone(165,.45,"sawtooth",.15,.08); };
+const sWhistle = () => { tone(2100,.18,"square",0,.05); tone(2100,.3,"square",.22,.05); };
+const sWin = () => { [523,659,784,659,784,1047].forEach((f,i)=>tone(f,.3,"triangle",i*.14)); };
+
+/* ============ STATE ============ */
+let S = null, selectedOpp = null;
+
+function buildStart(){
+  try { const saved = localStorage.getItem("penaltyCupP1"); if (saved) $("p1Input").value = saved; } catch(e){}
+  const list = $("oppList"); list.innerHTML = "";
+  ORDER.forEach(id=>{
+    const o = OPPS[id];
+    const b = document.createElement("button");
+    b.className = "opp"; b.dataset.id = id;
+    b.innerHTML = `<div class="avatar ${o.cls}">${o.init}</div><div><div class="nm">${o.name}</div><div class="tag">${o.tag}</div></div>`;
+    b.onclick = () => { selectedOpp = id; document.querySelectorAll(".opp").forEach(x=>x.classList.toggle("sel", x===b)); updateKickoff(); };
+    list.appendChild(b);
+  });
+  $("p1Input").addEventListener("input", updateKickoff);
+  updateKickoff();
+}
+function updateKickoff(){
+  const name = $("p1Input").value.trim();
+  $("p1Init").textContent = initialOf(name || "?");
+  const ok = name.length > 0 && selectedOpp;
+  $("kickoff").disabled = !ok;
+  $("kickoff").textContent = !name ? "Type your name first ✏️" : !selectedOpp ? "Pick an opponent 👆" : `Kick off vs ${OPPS[selectedOpp].name}! ⚽`;
+}
+
+function show(id){ document.querySelectorAll(".screen").forEach(s=>s.classList.toggle("active", s.id===id)); window.scrollTo(0,0); }
+
+function setNames(){
+  document.querySelectorAll(".p1name").forEach(el=>el.textContent = P1);
+  document.querySelectorAll(".p1init").forEach(el=>el.textContent = initialOf(P1));
+}
+
+function startTournament(){
+  P1 = $("p1Input").value.trim() || "Player 1";
+  try { localStorage.setItem("penaltyCupP1", P1); } catch(e){}
+  setNames();
+  const o = OPPS[selectedOpp];
+  const qs = drawQuestions(NQ);
+  const goals = o.goals();
+  const plan = shuffle(Array.from({length:NQ},(_,i)=> i < goals));
+  S = { opp:o, qs, plan, qi:0, match:0, phase:"regular", kick:0, sdRound:0, sdLower:null,
+        k:[], o:[], winsK:0, winsO:0, results:[], correct:0, answered:0, kGoalsTotal:0, oGoalsTotal:0, oKicks:0,
+        current:null, extraUsed: qs.map(q=>q.key), sdWinner:null };
+  qs.forEach(q=>seen.add(q.key));
+  $("oppName").textContent = o.name; $("oWho").textContent = o.name;
+  const av = $("oppAv"); av.className = "avatar " + o.cls; av.textContent = o.init;
+  show("play"); sWhistle();
+  newMatchUI();
+  askQuestion();
+}
+
+function extraQuestion(){
+  const q = drawQuestions(1, S.extraUsed)[0] || makeQ(pick(BANK));
+  S.extraUsed.push(q.key); seen.add(q.key);
+  return q;
+}
+
+function newMatchUI(){ S.k = []; S.o = []; S.kick = 0; renderDots(); renderBoard(); }
+
+function renderBoard(){
+  $("gw").textContent = `${S.winsK} – ${S.winsO}`;
+  const lv = $("levels"); lv.innerHTML = "";
+  for (let i=0;i<NM;i++){
+    const d = document.createElement("div"); d.className = "lv"; d.textContent = i+1;
+    const r = S.results[i];
+    if (r) d.classList.add(r.winner==="k" ? "w" : "l");
+    else if (i===S.match && S.phase!=="finalSD") d.classList.add("now");
+    lv.appendChild(d);
+  }
+  $("gameChip").textContent = S.phase==="finalSD" ? "🏆 Cup sudden death" : `Match ${S.match+1} of ${NM}`;
+}
+
+function renderDots(){
+  const mk = (arr, el) => {
+    el.innerHTML = "";
+    const n = S.phase==="finalSD" ? Math.max(1, arr.length) : Math.max(5, arr.length);
+    for (let i=0;i<n;i++){
+      const d = document.createElement("div"); d.className = "dot";
+      if (i>=5 || S.phase==="finalSD") d.classList.add("sd");
+      if (arr[i]===true){ d.classList.add("g"); d.textContent="✓"; }
+      else if (arr[i]===false){ d.classList.add("m"); d.textContent="✕"; }
+      el.appendChild(d);
+    }
+  };
+  mk(S.k, $("kDots")); mk(S.o, $("oDots"));
+  $("kTot").textContent = S.k.filter(Boolean).length;
+  $("oTot").textContent = S.o.filter(Boolean).length;
+}
+
+function resetScene(shooterText){
+  const ball = $("ball"), keeper = $("keeper");
+  ball.style.transition = "none"; keeper.style.transition = "none";
+  ball.style.transform = "translate(0,0) scale(1)"; keeper.style.transform = "translateX(0)";
+  void ball.offsetWidth;
+  ball.style.transition = ""; keeper.style.transition = "";
+  $("shooter").textContent = shooterText;
+  $("bigmsg").classList.remove("show");
+}
+
+function animateKick(scored, who){
+  const w = $("scene").clientWidth, h = $("scene").clientHeight;
+  const side = pick([-1,0,1]);
+  const tx = side * w * 0.26 + (Math.random()*16-8);
+  const ty = -(h * (0.42 + Math.random()*0.16));
+  const ball = $("ball"), keeper = $("keeper");
+  if (scored){
+    const kside = side===0 ? pick([-1,1]) : -side;
+    keeper.style.transform = `translateX(${kside*w*0.22}px) rotate(${kside*25}deg)`;
+    ball.style.transform = `translate(${tx}px, ${ty}px) scale(.7)`;
+    setTimeout(()=>$("goal").classList.add("shake"), 450);
+    setTimeout(()=>$("goal").classList.remove("shake"), 900);
+  } else {
+    keeper.style.transform = `translateX(${side*w*0.22}px) rotate(${side*25}deg)`;
+    ball.style.transform = `translate(${tx*0.85}px, ${ty*0.62}px) scale(.8)`;
+    setTimeout(()=>{ ball.style.transform = `translate(${tx*0.85 + (side||1)*40}px, ${ty*0.2}px) scale(.85)`; }, 520);
+  }
+  setTimeout(()=>{
+    const m = $("bigmsg");
+    m.textContent = scored ? "GOAL!" : (who==="k" ? "SAVED!" : "MISSED!");
+    m.classList.add("show");
+    scored ? sGoal() : sMiss();
+  }, 480);
+}
+
+/* ---- Sudden death: max 2 kicks. The side with the lower accuracy so far misses kick 1. ---- */
+function startSuddenDeath(phase, title){
+  const kAcc = pct(S.correct, S.answered), oAcc = pct(S.oGoalsTotal, S.oKicks);
+  S.sdLower = kAcc < oAcc ? "k" : "o";     // a tie in accuracy goes in the player's favour
+  S.sdRound = 1;
+  S.phase = phase;
+  if (phase==="finalSD"){ S.k = []; S.o = []; }
+  renderDots(); renderBoard();
+  resetScene("⚡ Sudden death");
+  const m = $("bigmsg"); m.textContent = "SUDDEN DEATH!"; m.classList.add("show");
+  $("oppline").textContent = "";
+  $("nextBtn").style.display = "none";
+  sWhistle();
+  setTimeout(askQuestion, 1800);
+}
+
+function sdLabel(){ return "Sudden-death kick"; }
+
+function prepCard(){
+  const fb = $("feedback"); fb.className = "feedback"; fb.innerHTML = "";
+  $("oppline").textContent = "";
+  $("nextBtn").style.display = "none";
+  const inSD = S.phase !== "regular";
+  $("penLabel").textContent = inSD ? sdLabel() : `Penalty ${S.kick+1} of 5`;
+  $("sdTag").innerHTML = inSD ? `<span class="sdtag">⚡ SUDDEN DEATH</span>` : "";
+}
+
+function askQuestion(){
+  const q = S.phase === "regular" ? S.qs[S.qi] : extraQuestion();
+  S.current = q;
+  resetScene(`${P1} to shoot…`);
+  prepCard();
+  $("qChip").textContent = S.phase==="regular" ? `Question ${S.qi+1} of ${NQ}` : "Bonus question";
+  $("qtext").innerHTML = esc(q.text).replace(/\bNOT\b/g, "<mark>NOT</mark>");
+  const opts = $("opts"); opts.innerHTML = "";
+  q.opts.forEach((t,i)=>{
+    const b = document.createElement("button");
+    b.className = `opt o${i}`;
+    b.innerHTML = `<span class="let">${LET[i]}</span><span>${esc(t)}</span>`;
+    b.onclick = () => answer(i);
+    opts.appendChild(b);
+  });
+}
+
+function answer(i){
+  const q = S.current, ok = i === q.ans;
+  [...document.querySelectorAll(".opt")].forEach((b,j)=>{ b.disabled = true; if (j===q.ans) b.classList.add("right"); else if (j===i) b.classList.add("wrong"); else b.classList.add("dim","gone"); });
+  S.answered++; if (ok){ S.correct++; S.kGoalsTotal++; }
+  S.k.push(ok);
+  animateKick(ok, "k");
+  const fb = $("feedback");
+  if (ok){ fb.className = "feedback show good"; fb.innerHTML = nm(pick(PRAISE)); }
+  else { fb.className = "feedback show bad"; fb.innerHTML = `${nm(pick(MOTIVATE))}<div class="ans">✅ The right answer: <b>${esc(q.opts[q.ans])}</b></div>`; }
+  setTimeout(renderDots, 500);
+  setTimeout(()=>opponentKick(ok), 1700);
+}
+
+// Sudden-death kick 1 when the player has the lower accuracy: the kick is saved automatically.
+function autoMissKick(){
+  resetScene(`${P1} to shoot…`);
+  prepCard();
+  $("qChip").textContent = "Sudden death";
+  $("qtext").innerHTML = `⚡ Sudden death! ${esc(P1)} steps up to take the kick…`;
+  $("opts").innerHTML = "";
+  S.k.push(false);
+  setTimeout(()=>{
+    animateKick(false, "k");
+    const fb = $("feedback"); fb.className = "feedback show bad";
+    fb.innerHTML = nm("What a save by the keeper! Don't worry, {P} — you can still win this! 💪");
+    setTimeout(renderDots, 500);
+    setTimeout(()=>opponentKick(false), 1700);
+  }, 500);
+}
+
+function opponentOutcome(kOk){
+  if (S.phase === "regular") return S.plan[S.qi];
+  if (S.sdRound === 1) return S.sdLower === "o" ? false : Math.random() < S.opp.p;
+  return !kOk;   // kick 2 always settles it: the player's answer decides
+}
+
+function opponentKick(kOk){
+  resetScene(`${S.opp.name} to shoot…`);
+  $("oppline").textContent = `⚽ ${S.opp.name} is taking the penalty…`;
+  setTimeout(()=>{
+    const oScored = opponentOutcome(kOk);
+    S.o.push(oScored); S.oKicks++; if (oScored) S.oGoalsTotal++;
+    animateKick(oScored, "o");
+    $("oppline").textContent = oScored ? `${S.opp.name} scores! 😮` : `${S.opp.name} misses! Big chance for you! 🙌`;
+    setTimeout(()=>{ renderDots(); afterPair(); }, 650);
+  }, 500);
+}
+
+function afterPair(){
+  const kG = S.k.filter(Boolean).length, oG = S.o.filter(Boolean).length;
+  const nb = $("nextBtn");
+  if (S.phase === "regular"){
+    S.qi++; S.kick++;
+    if (S.kick < 5){ nb.textContent = "Next penalty ➜"; nb.onclick = askQuestion; }
+    else if (kG !== oG){ setTimeout(finishMatch, 1800); return; }
+    else { setTimeout(()=>startSuddenDeath("matchSD"), 1800); return; }
+  } else {
+    const kLast = S.k[S.k.length-1], oLast = S.o[S.o.length-1];
+    if (kLast !== oLast){
+      if (S.phase === "matchSD") setTimeout(finishMatch, 1800);
+      else { S.sdWinner = kLast ? "k" : "o"; setTimeout(showFinal, 1800); }
+      return;
+    } else {
+      S.sdRound = 2;
+      nb.textContent = "Next kick ⚡"; nb.onclick = askQuestion;
+    }
+  }
+  nb.style.display = "block";
+}
+
+function finishMatch(){
+  const kG = S.k.filter(Boolean).length, oG = S.o.filter(Boolean).length;
+  const winner = kG > oG ? "k" : "o";
+  if (winner==="k") S.winsK++; else S.winsO++;
+  S.results.push({kG, oG, winner, sd: S.phase === "matchSD"});
+  S.phase = "regular";
+  renderBoard();
+  const won = winner === "k";
+  if (won) { sWin(); confetti(40); } else sMiss();
+  const left = NM - 1 - S.match;
+  const msg = won
+    ? pick(["Fantastic! You won this match!", `Brilliant! That's a win for ${esc(P1)}!`, "Superstar! Match won!"])
+    : pick([`${S.opp.name} won this one — but you can fight back!`, "Unlucky! The next match is a fresh start. 💪", `Keep going, ${esc(P1)}! Champions never give up!`]);
+  openModal(`
+    <div class="em">${won ? "🎉" : "💪"}</div>
+    <h3>Match ${S.match+1} result</h3>
+    <div class="score-big">${esc(P1)} ${kG} – ${oG} ${S.opp.name}</div>
+    ${S.results[S.results.length-1].sd ? `<p style="font-size:15px;opacity:.7">(decided by sudden death)</p>` : ""}
+    <p><b>${won ? esc(P1) : S.opp.name}</b> wins Match ${S.match+1}! ${msg}</p>
+    <p style="margin-top:8px">Matches won: <b>${esc(P1)} ${S.winsK} – ${S.winsO} ${S.opp.name}</b></p>
+    <p style="margin-top:10px;font-size:15px;opacity:.7" id="mCount"></p>
+    <button class="btn" id="mNext">${left > 0 ? `Start Match ${S.match+2} now ➜` : "See the Champion now 🏆"}</button>`);
+  let secs = 5, done = false;
+  const tick = () => { $("mCount").textContent = left > 0 ? `Match ${S.match+2} starts in ${secs}…` : `The Champion is revealed in ${secs}…`; };
+  tick();
+  const timer = setInterval(()=>{ secs--; if (secs <= 0) go(); else tick(); }, 1000);
+  const go = () => {
+    if (done) return; done = true; clearInterval(timer);
+    closeModal();
+    S.match++;
+    if (S.match < NM){ newMatchUI(); sWhistle(); askQuestion(); }
+    else if (S.winsK === S.winsO) startSuddenDeath("finalSD");
+    else showFinal();
+  };
+  $("mNext").onclick = go;
+}
+
+function modalSD(title, text, go){
+  sWhistle();
+  openModal(`<div class="em">⚡</div><h3>${title}</h3><p>${text}</p><button class="btn" id="mGo">Let's go! ⚽</button>`);
+  $("mGo").onclick = () => { closeModal(); go(); };
+}
+function openModal(html){ $("modal").innerHTML = html; $("overlay").classList.add("show"); }
+function closeModal(){ $("overlay").classList.remove("show"); }
+
+/* DeltaNuva PlayLab sign-off animation (about 3 seconds) before the Champion screen */
+
+function brandSplash(then){
+  const sp = $("splash");
+  sp.innerHTML = `<img src="https://www.deltanuva.com/NoNameLogo_Transparent_NoBuffer.png" alt="DeltaNuva" class="splash-logo"><div class="pl">DeltaNuva <b>PlayLab</b></div>`;
+  sp.classList.add("show");
+  setTimeout(()=>{ sp.classList.remove("show"); sp.innerHTML = ""; then(); }, 3300);
+}
+function showFinal(){ brandSplash(revealFinal); }
+
+function revealFinal(){
+  const champK = S.winsK > S.winsO || (S.winsK === S.winsO && S.sdWinner === "k");
+  const viaSD = S.winsK === S.winsO;
+  $("trophy").textContent = champK ? "🏆" : "🥈";
+  $("champTitle").innerHTML = champK ? `<span>${esc(P1).toUpperCase()}</span> is the Champion!` : `${S.opp.name} wins the Cup!`;
+  $("champSub").textContent = champK
+    ? `What a tournament! You beat ${S.opp.name}${viaSD ? " in sudden death" : ""}! 🎉`
+    : `So close${viaSD ? " — it went to sudden death" : ""}! You got ${S.correct} answers right. Play again and win the Cup! 💪`;
+  $("stAcc").textContent = `${S.correct} / ${S.answered}`;
+  $("stOpp").textContent = S.oGoalsTotal;
+  $("stOppLbl").textContent = `${S.opp.name}'s goals`;
+  $("stGoals").textContent = S.kGoalsTotal;
+  $("stGames").textContent = `${S.winsK} – ${S.winsO}`;
+  let rows = `<tr><td>Match</td><td>${esc(P1)}</td><td>${S.opp.name}</td><td>Winner</td></tr>`;
+  S.results.forEach((r,i)=>{
+    rows += `<tr><td>${i+1}${r.sd?" ⚡":""}</td><td>${r.kG}</td><td>${r.oG}</td><td><span class="wtag ${r.winner}">${r.winner==="k"?esc(P1):S.opp.name}</span></td></tr>`;
+  });
+  if (S.sdWinner) rows += `<tr><td>Cup ⚡</td><td>${S.k.filter(Boolean).length}</td><td>${S.o.filter(Boolean).length}</td><td><span class="wtag ${S.sdWinner}">${S.sdWinner==="k"?esc(P1):S.opp.name}</span></td></tr>`;
+  $("resTable").innerHTML = rows;
+  $("againBtn").textContent = `Play next tournament vs ${S.opp.name} ⚽`;
+  show("final");
+  if (champK){ sWin(); confetti(120); }
+}
+
+function confetti(n){
+  const colors = ["#ffc83d","#2ecc71","#3fa9f5","#ff6b9d","#8e6cff","#ff9f43"];
+  for (let i=0;i<n;i++){
+    const c = document.createElement("div");
+    c.className = "confetti";
+    c.style.left = Math.random()*100 + "vw";
+    c.style.background = pick(colors);
+    c.style.animationDuration = (2 + Math.random()*2) + "s";
+    c.style.animationDelay = (Math.random()*0.8) + "s";
+    document.body.appendChild(c);
+    setTimeout(()=>c.remove(), 5000);
+  }
+}
+
+/* ============ WIRING ============ */
+buildStart();
+$("kickoff").onclick = startTournament;
+$("againBtn").onclick = startTournament;
+$("changeBtn").onclick = () => { show("start"); };
+$("muteBtn").onclick = () => { muted = !muted; $("muteBtn").textContent = muted ? "🔇" : "🔊"; };
+
+</script>
+</body>
+</html>
