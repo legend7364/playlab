@@ -44,14 +44,23 @@
   .av-mbappe{background:linear-gradient(135deg,#5b7cfa,#1b2a8a)}
   .nameIn{display:block;width:100%;margin-top:4px;font:inherit;font-size:22px;font-weight:700;border:3px solid #bfe3ff;border-radius:12px;padding:5px 10px;background:#fff;color:var(--ink);outline:none}
   .nameIn:focus{border-color:var(--gold2)}
-  .opp-list{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-  .opp{display:flex;align-items:center;gap:10px;border:3px solid #e3e8ef;border-radius:16px;padding:8px 10px;cursor:pointer;background:#fff;font:inherit;text-align:left;width:100%;transition:transform .1s,border-color .15s}
+  .opp-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));grid-auto-rows:1fr;gap:8px}
+  .opp{display:flex;align-items:center;gap:10px;min-width:0;height:100%;border:3px solid #e3e8ef;border-radius:16px;padding:8px 10px;cursor:pointer;background:#fff;font:inherit;text-align:left;width:100%;transition:transform .1s,border-color .15s}
   .opp:last-child:nth-child(odd){grid-column:1 / -1}
   .opp:active{transform:scale(.98)}
   .opp.sel{border-color:var(--gold2);background:#fff8e1}
-  .opp .avatar{width:44px;height:44px;font-size:19px;border-width:3px}
-  .opp .nm{font-size:18px;font-weight:700}
-  .opp .tag{font-size:13px;opacity:.7}
+  .opp .avatar{width:44px;height:44px;flex:0 0 44px;font-size:19px;border-width:3px}
+  .opp .ot{min-width:0;flex:1}
+  .opp-list{container-type:inline-size}
+  @container (max-width:380px){
+    .opp{flex-direction:column;justify-content:center;text-align:center;gap:4px;padding:6px 4px}
+    .opp .avatar{width:34px;height:34px;flex:0 0 34px;font-size:15px}
+    .opp .ot{width:100%}
+    .opp .nm{font-size:15px}
+    .opp .tag{font-size:11px}
+  }
+  .opp .nm{font-size:clamp(14px,1.6vw,18px);font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .opp .tag{font-size:clamp(11px,1.2vw,13px);opacity:.7;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .rules{font-size:clamp(13px,2vh,16px);line-height:1.45}
   .rules li{margin-left:18px;margin-bottom:3px}
   .btn{display:block;width:100%;border:none;border-radius:16px;padding:clamp(10px,1.8vh,15px);font:inherit;font-size:clamp(18px,2.6vh,22px);font-weight:700;cursor:pointer;color:#3a2a00;background:linear-gradient(#ffd75e,#ffb300);box-shadow:0 6px 0 #c98a00;transition:transform .08s}
@@ -131,11 +140,11 @@
   .oppline{font-size:clamp(14px,2.1vh,17px);font-weight:600;min-height:22px}
 
   /* ---------- BRAND ---------- */
-  .brand{display:inline-flex;align-items:center;gap:8px;background:#fff;border-radius:999px;padding:4px 14px 4px 5px;box-shadow:0 3px 0 rgba(0,0,0,.18);font-weight:700;color:#2B3A55;font-size:16px;white-space:nowrap}
-  .brand img{height:30px;width:auto}
+  .brand{display:inline-flex;align-items:center;gap:8px;background:#fff;border-radius:999px;padding:5px 16px 5px 12px;overflow:hidden;box-shadow:0 3px 0 rgba(0,0,0,.18);font-weight:700;color:#2B3A55;font-size:16px;white-space:nowrap}
+  .brand img{height:26px;width:auto;display:block}
   .brand b{color:#E8A33C}
-  .brand.sm{padding:2px 10px 2px 3px;font-size:13px;gap:5px}
-  .brand.sm img{height:22px}
+  .brand.sm{padding:3px 10px 3px 8px;font-size:13px;gap:5px}
+  .brand.sm img{height:20px}
   .foot{color:#fff;opacity:.7;font-size:13px;text-align:center}
   .splash{position:fixed;inset:0;background:#fff;display:none;flex-direction:column;align-items:center;justify-content:center;gap:6px;z-index:40}
   .splash.show{display:flex}
@@ -211,7 +220,7 @@
     #start .title .mini-rules{display:block}
     .chip{font-size:12px;padding:4px 9px}
     .brand.sm .bt{display:none}
-    .brand.sm{padding:2px}
+    .brand.sm{padding:3px 6px}
     #play .qtext{font-size:19px}
     #play .opt{font-size:16px;padding:9px 12px}
     #final{overflow-y:auto;align-content:start}
@@ -221,7 +230,7 @@
     #start .rulesPanel{display:none}
     #start .spinball{display:none}
     .opp{padding:6px 8px}
-    .opp .nm{font-size:16px}
+    .opp .nm{font-size:15px}
     .opp .tag{font-size:12px}
     .finalLeft{gap:6px}
   }
@@ -250,7 +259,7 @@
           <li>Win the most matches to become <b>Champion</b> 🏆</li>
         </ul>
       </div>
-      <p class="foot">DeltaNuva PlayLab · Skills Through Stories</p>
+      <p class="foot">DeltaNuva PlayLab · Powered by DeltaNuva</p>
     </div>
     <div class="col" style="justify-content:center">
       <div class="panel">
@@ -315,7 +324,7 @@
       <div class="champ"><h2 id="champTitle"></h2><p id="champSub"></p></div>
       <button class="btn" id="againBtn">Play next tournament ⚽</button>
       <button class="btn ghost" id="changeBtn">Change player or opponent</button>
-      <p class="foot">DeltaNuva PlayLab · Skills Through Stories</p>
+      <p class="foot">DeltaNuva PlayLab · Powered by DeltaNuva</p>
     </div>
     <div class="col" style="justify-content:center">
       <div class="panel">
@@ -545,7 +554,7 @@ const BANK = [
 /* ============ OPPONENTS ============ */
 const OPPS = {
   ronaldo:{name:"Ronaldo",   init:"R",  cls:"av-ronaldo", tag:"The Rocket",       goals:()=> (Math.random()<0.5?18:19), p:0.74},
-  neymar: {name:"Neymar Jr", init:"NJ", cls:"av-neymar",  tag:"The Magician",     goals:()=> (Math.random()<0.5?20:21), p:0.82},
+  neymar: {name:"Neymar",    init:"N" , cls:"av-neymar",  tag:"The Magician",     goals:()=> (Math.random()<0.5?20:21), p:0.82},
   messi:  {name:"Messi",     init:"LM", cls:"av-messi",   tag:"The Maestro",      goals:()=> (Math.random()<0.5?20:21), p:0.82},
   haaland:{name:"Haaland",   init:"H",  cls:"av-haaland", tag:"The Goal Machine", goals:()=> (Math.random()<0.5?20:21), p:0.82},
   mbappe: {name:"Mbappé",    init:"M",  cls:"av-mbappe",  tag:"The Speedster",    goals:()=>22, p:0.88},
@@ -631,7 +640,7 @@ function buildStart(){
     const o = OPPS[id];
     const b = document.createElement("button");
     b.className = "opp"; b.dataset.id = id;
-    b.innerHTML = `<div class="avatar ${o.cls}">${o.init}</div><div><div class="nm">${o.name}</div><div class="tag">${o.tag}</div></div>`;
+    b.innerHTML = `<div class="avatar ${o.cls}">${o.init}</div><div class="ot"><div class="nm">${o.name}</div><div class="tag">${o.tag}</div></div>`;
     b.onclick = () => { selectedOpp = id; document.querySelectorAll(".opp").forEach(x=>x.classList.toggle("sel", x===b)); updateKickoff(); };
     list.appendChild(b);
   });
